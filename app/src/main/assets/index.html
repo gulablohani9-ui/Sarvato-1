@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Vastu Griha Analyzer</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f1e8;color:#25221d;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:linear-gradient(135deg,#6d3f20,#a96b32);color:#fff;padding:18px 16px 20px;position:sticky;top:0;z-index:5;box-shadow:0 3px 12px #0002}
+h1{font-size:22px;margin:0 0 5px}.sub{opacity:.9;font-size:13px}
+nav{display:flex;overflow:auto;gap:8px;padding:10px;background:#fff;border-bottom:1px solid #ddd}
+nav button{border:1px solid #d8c8b4;background:#fff;border-radius:20px;padding:9px 13px;white-space:nowrap}
+nav button.active{background:#7b4a28;color:#fff}
+main{max-width:900px;margin:auto;padding:14px}.card{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px #0000000d;border:1px solid #eadfce}
+h2{font-size:18px;margin:0 0 12px}.row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+label{font-size:13px;color:#665c50;display:block;margin-bottom:5px}input,select,button{font:inherit}input,select{width:100%;padding:11px;border:1px solid #cfc2b2;border-radius:10px;background:#fff}
+.btn{border:0;border-radius:11px;padding:11px 15px;background:#7b4a28;color:#fff;font-weight:600}.btn.alt{background:#eee3d5;color:#57371f}.btn.full{width:100%;margin-top:12px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.kpi{padding:12px;border-radius:12px;background:#f7f0e5;text-align:center}.kpi b{font-size:21px;display:block}
+.compass{width:250px;height:250px;border-radius:50%;margin:10px auto 16px;background:radial-gradient(circle,#fff 0 54%,#ead8bf 55% 56%,#fff 57%);border:5px solid #7b4a28;position:relative}
+.compass span{position:absolute;font-weight:800}.N{top:8px;left:50%;transform:translateX(-50%)}.S{bottom:8px;left:50%;transform:translateX(-50%)}.E{right:10px;top:50%;transform:translateY(-50%)}.W{left:10px;top:50%;transform:translateY(-50%)}
+.arrow{position:absolute;left:50%;top:22%;height:28%;width:4px;background:#a33;transform-origin:bottom;border-radius:4px}
+.arrow:after{content:"";position:absolute;top:-10px;left:-6px;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid #a33}
+.mandala{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;max-width:520px;margin:auto}.cell{aspect-ratio:1;border:1px solid #d7c8b5;background:#fff5e8;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9px;padding:2px}.cell.center{background:#ecd1a8;font-weight:700}.cell.zone{background:#f5e2c8}.cell.bad{background:#efd0c8}.cell.good{background:#dcebd8}
+.legend{display:flex;gap:8px;flex-wrap:wrap;font-size:12px}.pill{padding:5px 8px;border-radius:10px;background:#eee3d5}
+.result{padding:12px;border-radius:12px;margin-top:10px;border-left:5px solid #7b4a28;background:#faf6ef}.goodR{border-left-color:#4f7d49}.warnR{border-left-color:#b36b26}.badR{border-left-color:#a4473b}
+.hidden{display:none}.small{font-size:12px;color:#74695e;line-height:1.5}.score{font-size:38px;font-weight:800;text-align:center;margin:4px}
+.roomgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.roomgrid button{padding:12px 5px;border:1px solid #d7c8b5;background:#fff;border-radius:10px}
+.roomgrid button.sel{background:#7b4a28;color:#fff}
+@media(max-width:520px){.row{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr 1fr}.compass{width:220px;height:220px}.cell{font-size:7px}}
+</style>
+</head>
+<body>
+<header><h1>🏠 Vastu Griha Analyzer</h1><div class="sub">Vastu Purusha Mandala • 8 दिशाएँ • Room Placement • Dosha Check</div></header>
+<nav>
+<button class="active" data-tab="home">मुख्य जाँच</button>
+<button data-tab="mandala">81 Pada</button>
+<button data-tab="rooms">Room Planner</button>
+<button data-tab="about">नियम / जानकारी</button>
+</nav>
+<main>
+<section id="home">
+<div class="card">
+<h2>1. Plot / House Direction</h2>
+<div class="row">
+<div><label>North की degree (0° = North)</label><input id="north" type="number" value="0" min="0" max="359" step="1"></div>
+<div><label>मुख्य द्वार की दिशा</label><select id="door"><option value="N">North</option><option value="NE">North-East</option><option value="E">East</option><option value="SE">South-East</option><option value="S">South</option><option value="SW">South-West</option><option value="W">West</option><option value="NW">North-West</option></select></div>
+</div>
+<button class="btn full" id="analyze">Vastu Analysis करें</button>
+</div>
+
+<div class="card">
+<h2>दिशा</h2>
+<div class="compass"><span class="N">उत्तर<br>N</span><span class="E">पूर्व<br>E</span><span class="S">दक्षिण<br>S</span><span class="W">पश्चिम<br>W</span><div id="arrow" class="arrow"></div></div>
+<div class="kpis"><div class="kpi"><b id="score">—</b><span>Vastu score</span></div><div class="kpi"><b id="zone">—</b><span>मुख्य zone</span></div><div class="kpi"><b id="doorout">—</b><span>Door zone</span></div></div>
+<div id="summary" class="result">Analysis के लिए ऊपर button दबाएँ।</div>
+</div>
+
+<div class="card">
+<h2>2. 8 Direction Analysis</h2>
+<div id="directions"></div>
+</div>
+</section>
+
+<section id="mandala" class="hidden">
+<div class="card">
+<h2>Vastu Purusha Mandala — 9 × 9</h2>
+<p class="small">यह 81-pada grid दिशा और central Brahmasthan को देखने के लिए है। Plot को उत्तर ऊपर रखकर देखें।</p>
+<div id="mandalaGrid" class="mandala"></div>
+<div class="legend" style="margin-top:12px"><span class="pill">🟩 सामान्य अनुकूल</span><span class="pill">🟨 मिश्रित</span><span class="pill">🟥 सावधानी</span></div>
+</div>
+</section>
+
+<section id="rooms" class="hidden">
+<div class="card">
+<h2>Room Planner</h2>
+<p class="small">जिस room को check करना है उसे चुनें, फिर उसकी position बताइए। यह traditional Vastu guidance है, structural engineering advice नहीं।</p>
+<div class="roomgrid" id="roomsGrid"></div>
+<div style="margin-top:12px"><label>Room की दिशा</label><select id="roomDir">
+<option>N</option><option>NE</option><option>E</option><option>SE</option><option>S</option><option>SW</option><option>W</option><option>NW</option><option>Center</option>
+</select></div>
+<button class="btn full" id="roomCheck">Room Check</button>
+<div id="roomResult"></div>
+</div>
+</section>
+
+<section id="about" class="hidden">
+<div class="card">
+<h2>इस calculator में क्या है?</h2>
+<ul>
+<li>8 दिशाओं और inter-cardinal zones का traditional Vastu assessment.</li>
+<li>81-pada / Vastu Purusha Mandala visualization.</li>
+<li>Main entrance और selected room placement checks.</li>
+<li>Central Brahmasthan को अलग highlight.</li>
+<li>Rules app में local हैं — किसी external Vastu API पर निर्भर नहीं।</li>
+</ul>
+<p class="small">Vastu traditions में अलग ग्रंथों और schools के अनुसार कुछ नियम/पद placement बदल सकते हैं। इसलिए इसे practical planning guide की तरह इस्तेमाल करें; structural, fire, electrical और building-code decisions qualified professionals से verify करें.</p>
+</div>
+</section>
+</main>
+<script>
+const D={
+N:{name:"North",element:"Water",quality:"धन/अवसर",rooms:"पूजा, study, living",score:10},
+NE:{name:"North-East",element:"Water",quality:"ईशान • clarity/spiritual zone",rooms:"पूजा, meditation, entrance",score:12},
+E:{name:"East",element:"Air/solar",quality:"प्रकाश/आरोग्य",rooms:"living, study",score:10},
+SE:{name:"South-East",element:"Fire",quality:"अग्नि zone",rooms:"kitchen, electrical",score:8},
+S:{name:"South",element:"Fire",quality:"स्थिरता/heat",rooms:"staircase, storage",score:6},
+SW:{name:"South-West",element:"Earth",quality:"स्थिरता/weight",rooms:"master bedroom, heavy storage",score:10},
+W:{name:"West",element:"Space/air",quality:"support/settlement",rooms:"dining, children/utility",score:7},
+NW:{name:"North-West",element:"Air",quality:"movement",rooms:"guest room, toilet, storage",score:8},
+Center:{name:"Brahmasthan",element:"Space",quality:"central balance",rooms:"open/light",score:12}
+};
+const roomRules={
+"Master Bedroom":["SW","S","W"],"Kitchen":["SE","NW"],"Puja Room":["NE","E","N"],"Living Room":["N","E","NE","NW"],"Children Room":["W","NW","E"],"Guest Room":["NW","W"],"Toilet":["NW","SE","W"],"Staircase":["S","SW","W"],"Study Room":["E","N","NE"],"Dining":["W","E","NW"],"Store/Heavy":["SW","S","W"],"Water/Underground":["NE","N","E"]
+};
+let selectedRoom="Master Bedroom";
+function scoreDoor(x){return ({N:9,NE:10,E:9,SE:6,S:5,SW:4,W:7,NW:8})[x]||5}
+function directionHTML(){
+ let s="";
+ Object.keys(D).filter(x=>x!=="Center").forEach(k=>{
+  s+=`<div class="result ${D[k].score>=10?'goodR':D[k].score<=6?'warnR':''}"><b>${D[k].name} (${k})</b><br><span class="small">Element: ${D[k].element} • ${D[k].quality} • Suggested: ${D[k].rooms}</span></div>`;
+ });
+ document.getElementById("directions").innerHTML=s;
+}
+function analyze(){
+ const n=Number(document.getElementById("north").value)||0, door=document.getElementById("door").value;
+ document.getElementById("arrow").style.transform=`rotate(${n}deg)`;
+ const ds=Object.keys(D).filter(x=>x!=="Center"), base=ds.reduce((a,k)=>a+D[k].score,0)/ds.length;
+ let sc=Math.round(Math.max(0,Math.min(100,base*7 + scoreDoor(door)*1.6)));
+ const z=n<45||n>=315?"North":n<135?"East":n<225?"South":"West";
+ document.getElementById("score").textContent=sc;
+ document.getElementById("zone").textContent=z;
+ document.getElementById("doorout").textContent=door;
+ const cls=sc>=75?"goodR":sc>=55?"warnR":"badR";
+ document.getElementById("summary").className="result "+cls;
+ document.getElementById("summary").innerHTML=`<b>Assessment:</b> ${sc>=75?"अच्छा balance":sc>=55?"मिश्रित — room placement सुधारें":"कई areas की जाँच जरूरी"}<br><span class="small">Main door: ${D[door].name}. इस score को absolute scientific measurement न मानें; यह app के documented traditional rules का indicative summary है.</span>`;
+ directionHTML();
+}
+function buildMandala(){
+ const g=document.getElementById("mandalaGrid");g.innerHTML="";
+ const names=["NW","N","NE","W","Center","E","SW","S","SE"];
+ for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+  const el=document.createElement("div");el.className="cell";
+  if(r>=3&&r<=5&&c>=3&&c<=5) el.classList.add("zone");
+  if(r===4&&c===4){el.classList.add("center");el.textContent="Brahma";} else {
+   const zone= r<3&&c<3?"NW":r<3&&c>5?"NE":r>5&&c<3?"SW":r>5&&c>5?"SE":r<3?"N":r>5?"S":c<3?"W":c>5?"E":"Center";
+   el.textContent=zone;
+   if(["NE","E","N","SW"].includes(zone))el.classList.add("good");
+   if(["SE","S"].includes(zone))el.classList.add("bad");
+  }
+  g.appendChild(el);
+ }
+}
+function buildRooms(){
+ const g=document.getElementById("roomsGrid");g.innerHTML="";
+ Object.keys(roomRules).forEach(r=>{const b=document.createElement("button");b.textContent=r;b.onclick=()=>{selectedRoom=r;document.querySelectorAll("#roomsGrid button").forEach(x=>x.classList.remove("sel"));b.classList.add("sel")};g.appendChild(b)});
+ g.firstChild.classList.add("sel");
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll("main>section").forEach(s=>s.classList.add("hidden"));document.getElementById(b.dataset.tab).classList.remove("hidden")});
+document.getElementById("analyze").onclick=analyze;
+document.getElementById("roomCheck").onclick=()=>{
+ const d=document.getElementById("roomDir").value, ok=roomRules[selectedRoom].includes(d);
+ document.getElementById("roomResult").innerHTML=`<div class="result ${ok?'goodR':'badR'}"><b>${selectedRoom} → ${d}</b><br>${ok?"यह traditional placement list में आता है।":"यह placement कई traditional Vastu schools में preferred नहीं माना जाता।"}<br><span class="small">Suggested directions: ${roomRules[selectedRoom].join(", ")}.</span></div>`;
+};
+buildMandala();buildRooms();directionHTML();analyze();
+</script>
+</body>
+</html>
